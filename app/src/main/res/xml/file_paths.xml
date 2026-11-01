@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Carpeta que el FileProvider comparte con la app de cámara (fotos de equipos y daños) -->
+<paths>
+    <files-path
+        name="fotos"
+        path="fotos/" />
+</paths>
