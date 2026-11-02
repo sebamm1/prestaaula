@@ -108,7 +108,10 @@ fun ReservaScreen(
                 etiqueta = "Curso",
                 icono = Icons.Filled.School,
                 error = errores[Validador.CURSO],
-                tocado = Validador.CURSO in form.tocados
+                tocado = Validador.CURSO in form.tocados,
+                valorSeleccionado = form.curso,
+                // Agrupa como en la maqueta: "1° Básico" → A, B, C
+                grupoDe = { valor -> CURSOS.firstOrNull { it.valor == valor }?.etiqueta?.substringBeforeLast(" ") ?: "" }
             )
 
             // 2. Día

@@ -3,14 +3,19 @@
 package com.example.prestaaula.ui.components
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.DropdownMenu
@@ -28,6 +33,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.prestaaula.ui.theme.coloresExtra
@@ -113,6 +121,9 @@ fun CampoTexto(
 /**
  * Campo desplegable (curso y tipo de equipo), con el mismo estilo y validación que CampoTexto.
  * opciones: lista de (valor que se guarda, texto que se muestra).
+ * valorSeleccionado: la opción elegida se marca en el menú.
+ * grupoDe: si se entrega, las opciones se agrupan bajo un encabezado (ej. "1° Básico" con A, B y C),
+ *          igual que en la maqueta.
  */
 @Composable
 fun CampoDesplegable(
@@ -123,12 +134,21 @@ fun CampoDesplegable(
     modifier: Modifier = Modifier,
     error: String? = null,
     tocado: Boolean = false,
-    icono: ImageVector? = null
+    icono: ImageVector? = null,
+    valorSeleccionado: String? = null,
+    grupoDe: ((String) -> String)? = null
 ) {
     var abierto by remember { mutableStateOf(false) }
     val mostrarError = tocado && error != null
+    // Ancho del campo: el menú se abre con el mismo ancho, en cualquier tamaño de pantalla
+    var anchoCampo by remember { mutableStateOf(0) }
+    val densidad = LocalDensity.current
 
-    Box(modifier = modifier.fillMaxWidth()) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .onSizeChanged { anchoCampo = it.width }
+    ) {
         OutlinedTextField(
             value = valorMostrado,
             onValueChange = {},
@@ -158,15 +178,37 @@ fun CampoDesplegable(
         DropdownMenu(
             expanded = abierto,
             onDismissRequest = { abierto = false },
-            modifier = Modifier.heightIn(max = 320.dp)
+            modifier = Modifier
+                .width(with(densidad) { anchoCampo.toDp() })
+                .heightIn(max = 320.dp)
         ) {
+            var grupoAnterior: String? = null
             opciones.forEach { (valor, texto) ->
+                // Encabezado del grupo (ej. "1° Básico"), solo cuando cambia de grupo
+                val grupo = grupoDe?.invoke(valor)
+                if (grupo != null && grupo != grupoAnterior) {
+                    Text(
+                        grupo,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 2.dp)
+                    )
+                }
+                grupoAnterior = grupo
+                val elegido = valor == valorSeleccionado
                 DropdownMenuItem(
                     text = { Text(texto) },
+                    trailingIcon = if (elegido) {
+                        { Icon(Icons.Filled.Check, contentDescription = "Elegido") }
+                    } else null,
                     onClick = {
                         abierto = false
                         onElegir(valor)
-                    }
+                    },
+                    // Con grupos, las opciones van con sangría bajo su encabezado
+                    contentPadding = PaddingValues(start = if (grupoDe != null) 32.dp else 16.dp, end = 16.dp),
+                    modifier = if (elegido) Modifier.background(MaterialTheme.colorScheme.primaryContainer) else Modifier
                 )
             }
         }
